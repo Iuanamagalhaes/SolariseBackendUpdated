@@ -23,7 +23,7 @@ router.get("/generation", async (req, res) => {
   }
 });
 
-// Fluxo de energia (erro)
+// Fluxo de energia (funciona) = http://localhost:4000/api/sems/powerflow?plantId=7f9af1fc-3a9a-4779-a4c0-ca6ec87bd93a
 router.get("/powerflow", async (req, res) => {
   try {
     const { plantId } = req.query;
