@@ -11,7 +11,7 @@ const {
 } = require("../services/sems_service");
 const { getDashboardData } = require("../services/dashboard_service");
 
-// Geração detalhada
+// ✅ Geração detalhada
 router.get("/generation", async (req, res) => {
   try {
     const { column } = req.query;
@@ -23,11 +23,10 @@ router.get("/generation", async (req, res) => {
   }
 });
 
-// Fluxo de energia (funciona) = http://localhost:4000/api/sems/powerflow?plantId=7f9af1fc-3a9a-4779-a4c0-ca6ec87bd93a
+// ✅ Fluxo de energia
 router.get("/powerflow", async (req, res) => {
   try {
-    const { plantId } = req.query;
-    const data = await getPowerflowData(plantId);
+    const data = await getPowerflowData();
     res.json(data);
   } catch (err) {
     console.error("powerflow error:", err);
@@ -35,7 +34,7 @@ router.get("/powerflow", async (req, res) => {
   }
 });
 
-// Lista de plantas (funciona) 
+// ✅ Lista de plantas
 router.get("/plants", async (req, res) => {
   try {
     const data = await getPlantsList();
@@ -46,23 +45,21 @@ router.get("/plants", async (req, res) => {
   }
 });
 
-// Detalhes dos inversores (erro)
+// ✅ Detalhes dos inversores
 router.get("/inverters", async (req, res) => {
   try {
-    const { plantId } = req.query;
-    const data = await getInvertersDetails(plantId);
+    const data = await getInvertersDetails();
     res.json(data);
   } catch (err) {
     console.error("inverters error:", err);
-    res.status(500).json({ error: "Falha ao obter inversores", detail: String(err) });
+    res.status(500).json({ error: "Falha ao obter detalhes dos inversores", detail: String(err) });
   }
 });
 
-// Detalhes da planta (erro)
+// ✅ Detalhes da planta
 router.get("/plant-details", async (req, res) => {
   try {
-    const { plantId } = req.query;
-    const data = await getPlantDetails(plantId);
+    const data = await getPlantDetails();
     res.json(data);
   } catch (err) {
     console.error("plant details error:", err);
@@ -70,11 +67,10 @@ router.get("/plant-details", async (req, res) => {
   }
 });
 
-// Estatísticas mensais (funciona)
+// ✅ Estatísticas mensais
 router.get("/stat-month", async (req, res) => {
   try {
-    const { plantId } = req.query;
-    const data = await getStatMonth(plantId);
+    const data = await getStatMonth();
     res.json(data);
   } catch (err) {
     console.error("stat month error:", err);
@@ -82,11 +78,10 @@ router.get("/stat-month", async (req, res) => {
   }
 });
 
-// Alertas (funcioona, mas não retorna nada)
+// ✅ Alertas / Warnings
 router.get("/warnings", async (req, res) => {
   try {
-    const { plantId } = req.query;
-    const data = await getWarnings(plantId);
+    const data = await getWarnings();
     res.json(data);
   } catch (err) {
     console.error("warnings error:", err);
@@ -94,7 +89,6 @@ router.get("/warnings", async (req, res) => {
   }
 });
 
-// Dashboard consolidado
 router.get("/dashboard", async (req, res) => {
   try {
     const dados = await getDashboardData();

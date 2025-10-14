@@ -7,10 +7,10 @@ const {
 const { parseColumnTimeseries, summarize } = require("../utils/parse");
 require("dotenv").config();
 
-// Inversor fixo (ajuste se quiser pegar dinamicamente)
-const FIXED_SN = "5010KETU229W6177";
+// IDs fixos
+const FIXED_SN = "5010KETU229W6177"; // inversor
+const FIXED_PLANT_ID = "7f9af1fc-3a9a-4779-a4c0-ca6ec87bd93a"; // planta
 
-// Função utilitária
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -39,7 +39,7 @@ async function ensureSession() {
   return sessionCache;
 }
 
-// Geração detalhada
+// ⚡ Geração detalhada
 async function getDetailedGeneration(column = "Eday") {
   const { token, apiBase } = await ensureSession();
   const dateStr = todayStr() + " 00:00:00";
@@ -57,46 +57,50 @@ async function getDetailedGeneration(column = "Eday") {
   return { series, resumo, rawHint: raw?.translationCode ?? raw?.code ?? null };
 }
 
-// Fluxo de energia (bateria, rede, consumo)
-async function getPowerflowData(powerStationId) {
+// ⚡ Fluxo de energia (funciona)
+async function getPowerflowData() {
   const { token, apiBase } = await ensureSession();
-  const payload = { powerStationId };
-  const data = await callApi(apiBase, token, "v2/PowerStation/GetPowerflow", payload);
-  return data;
+  const payload = { powerStationId: FIXED_PLANT_ID };
+  return await callApi(apiBase, token, "v2/PowerStation/GetPowerflow", payload);
 }
 
-// Lista de plantas (PlantsListCall)
+// 🌿 Lista de plantas (funciona)
 async function getPlantsList() {
   const { token, apiBase } = await ensureSession();
   return await callApi(apiBase, token, "PowerStationMonitor/QueryPowerStationMonitor");
 }
 
-// Detalhes dos inversores
-async function getInvertersDetails(powerStationId) {
+// ⚙️ Detalhes dos inversores (corrigido)
+async function getInvertersDetails() {
   const { token, apiBase } = await ensureSession();
-  const payload = { powerStationId };
-  return await callApi(apiBase, token, "PowerStation/GetInverterAllPoint", payload);
+  const payload = { stationId: FIXED_PLANT_ID }; // 👈 O campo correto é "stationId"
+  return await callApi(apiBase, token, "v3/PowerStation/GetInverterAllPoint", payload);
 }
 
-// Detalhes da planta
-async function getPlantDetails(powerStationId) {
+// 🏠 Detalhes da planta (corrigido)
+async function getPlantDetails() {
   const { token, apiBase } = await ensureSession();
-  const payload = { powerStationId };
-  return await callApi(apiBase, token, "PowerStation/GetPlantDetailByPowerstationId", payload);
+  const payload = { stationId: FIXED_PLANT_ID }; // 👈 Campo certo também é "stationId"
+  return await callApi(apiBase, token, "v3/PowerStation/GetPlantDetailByPowerstationId", payload);
 }
 
-// Estatísticas mensais
-async function getStatMonth(powerStationId) {
+// 📈 Estatísticas mensais (funciona)
+async function getStatMonth() {
   const { token, apiBase } = await ensureSession();
-  const payload = { powerStationId };
+  const payload = { stationId: FIXED_PLANT_ID };
   return await callApi(apiBase, token, "BigScreen/StatMonth12", payload);
 }
 
-// Alertas
-async function getWarnings(powerStationId) {
+// 🚨 Alertas (funciona, mas pode não ter alertas ativos)
+async function getWarnings() {
   const { token, apiBase } = await ensureSession();
-  const payload = { powerStationId };
-  return await callApi(apiBase, token, "SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition", payload);
+  const payload = { powerStationId: FIXED_PLANT_ID };
+  return await callApi(
+    apiBase,
+    token,
+    "SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition",
+    payload
+  );
 }
 
 module.exports = {
