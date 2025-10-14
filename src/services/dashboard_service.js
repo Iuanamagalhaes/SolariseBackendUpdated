@@ -1,12 +1,12 @@
 const axios = require("axios");
-const { getDetailedConsumption } = require("./sems_service");
+const { getDetailedGeneration } = require("./sems_service");
 
 const SOLARISE_BASE = "https://solarise-backend.onrender.com/v1/solarise";
 const TARIFA_R_KWH = 0.85; 
 
 async function getDashboardData() {
   // 1. Geração solar
-  const generation = await getDetailedConsumption("Eday");
+  const generation = await getDetailedGeneration("Eday");
   const geradoHoje = generation?.resumo?.energy_kwh || 0;
 
   // 2. Consumo diário
