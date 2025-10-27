@@ -20,11 +20,13 @@ let sessionCache = {
   token: null,
   apiBase: null,
   obtainedAt: 0,
-  ttlMs: 5 * 60 * 1000,
+  ttlMs: 5 * 60 * 1000, // 5 minutos
 };
 
-async function ensureSession() {
-  if (sessionCache.token && Date.now() - sessionCache.obtainedAt < sessionCache.ttlMs) {
+// 🔐 Garante sessão válida e renova se precisar
+async function ensureSession(force = false) {
+  // se já temos token válido e não for forçado
+  if (!force && sessionCache.token && Date.now() - sessionCache.obtainedAt < sessionCache.ttlMs) {
     return sessionCache;
   }
 
@@ -36,7 +38,30 @@ async function ensureSession() {
   );
 
   sessionCache = { token, apiBase, obtainedAt: Date.now(), ttlMs: 5 * 60 * 1000 };
+  console.log("🔑 Sessão renovada com sucesso.");
   return sessionCache;
+}
+
+// 🧠 Chamada segura que renova token se expirar
+async function safeCall(apiBase, token, endpoint, payload) {
+  let response = await callApi(apiBase, token, endpoint, payload);
+
+  // Se o login expirou, refaz automaticamente
+  if (
+    response?.translationCode === "code_100002" ||
+    response?.msg?.includes("expired") ||
+    response?.msg?.includes("authorization")
+  ) {
+    console.warn("⚠️ Token expirado. Renovando sessão...");
+
+    // força novo login
+    const { token: newToken, apiBase: newApiBase } = await ensureSession(true);
+
+    // tenta novamente com o novo token
+    response = await callApi(newApiBase, newToken, endpoint, payload);
+  }
+
+  return response;
 }
 
 // ⚡ Geração detalhada
@@ -57,45 +82,45 @@ async function getDetailedGeneration(column = "Eday") {
   return { series, resumo, rawHint: raw?.translationCode ?? raw?.code ?? null };
 }
 
-// ⚡ Fluxo de energia (funciona)
+// ⚡ Fluxo de energia
 async function getPowerflowData() {
   const { token, apiBase } = await ensureSession();
   const payload = { powerStationId: FIXED_PLANT_ID };
-  return await callApi(apiBase, token, "v2/PowerStation/GetPowerflow", payload);
+  return await safeCall(apiBase, token, "v2/PowerStation/GetPowerflow", payload);
 }
 
-// 🌿 Lista de plantas (funciona)
+// 🌿 Lista de plantas
 async function getPlantsList() {
   const { token, apiBase } = await ensureSession();
-  return await callApi(apiBase, token, "PowerStationMonitor/QueryPowerStationMonitor");
+  return await safeCall(apiBase, token, "PowerStationMonitor/QueryPowerStationMonitor");
 }
 
-// ⚙️ Detalhes dos inversores (corrigido)
+// ⚙️ Detalhes dos inversores
 async function getInvertersDetails() {
   const { token, apiBase } = await ensureSession();
-  const payload = { stationId: FIXED_PLANT_ID }; // 👈 O campo correto é "stationId"
-  return await callApi(apiBase, token, "v3/PowerStation/GetInverterAllPoint", payload);
+  const payload = { stationId: FIXED_PLANT_ID };
+  return await safeCall(apiBase, token, "v3/PowerStation/GetInverterAllPoint", payload);
 }
 
-// 🏠 Detalhes da planta (corrigido)
+// 🏠 Detalhes da planta
 async function getPlantDetails() {
   const { token, apiBase } = await ensureSession();
-  const payload = { stationId: FIXED_PLANT_ID }; // 👈 Campo certo também é "stationId"
-  return await callApi(apiBase, token, "v3/PowerStation/GetPlantDetailByPowerstationId", payload);
+  const payload = { stationId: FIXED_PLANT_ID };
+  return await safeCall(apiBase, token, "v3/PowerStation/GetPlantDetailByPowerstationId", payload);
 }
 
-// 📈 Estatísticas mensais (funciona)
+// 📈 Estatísticas mensais
 async function getStatMonth() {
   const { token, apiBase } = await ensureSession();
   const payload = { stationId: FIXED_PLANT_ID };
-  return await callApi(apiBase, token, "BigScreen/StatMonth12", payload);
+  return await safeCall(apiBase, token, "BigScreen/StatMonth12", payload);
 }
 
-// 🚨 Alertas (funciona, mas pode não ter alertas ativos)
+// 🚨 Alertas
 async function getWarnings() {
   const { token, apiBase } = await ensureSession();
   const payload = { powerStationId: FIXED_PLANT_ID };
-  return await callApi(
+  return await safeCall(
     apiBase,
     token,
     "SmartOperateMaintenance/GetPowerStationWariningInfoByMultiCondition",
