@@ -8,7 +8,7 @@ const { parseColumnTimeseries, summarize } = require("../utils/parse");
 require("dotenv").config();
 
 // IDs fixos
-const FIXED_SN = "5010KETU229W6177"; // inversor
+const FIXED_SN = "53600ERN238W0001"; // inversor
 const FIXED_PLANT_ID = "7f9af1fc-3a9a-4779-a4c0-ca6ec87bd93a"; // planta
 
 function todayStr() {
